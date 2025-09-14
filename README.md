@@ -38,9 +38,9 @@ Follow these steps to run the project locally:
    ```
 7. **Send job events from file into Kafka "jobs" topic (If the topic doesn't exist, Kafka may auto-create it)**
    ```bash
-    docker-compose exec kafka /bin/bash -c \
+    docker compose exec kafka /bin/bash -c \
     'cat data-files/jobs.kafka | kafka-console-producer.sh \
-    --bootstrap-server localhost:9092 \
+    --bootstrap-server kafka:9092 \
     --property parse.key=true \
     --property key.separator="|" \
     --topic jobs'
