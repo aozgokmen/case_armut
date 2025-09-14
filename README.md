@@ -45,7 +45,7 @@ Follow these steps to run the project locally:
     --property key.separator="|" \
     --topic jobs'
     ```
-8. **Check Kafka Topics**
+8. **Compose jobs-consumer to load data in Postgres **
    ```bash
    docker compose up -d jobs-consumer
    # or run interactively
