@@ -74,3 +74,54 @@ After loading **users** and sending **jobs** into Kafka, you can verify the pipe
    LIMIT 5;
    "
    ```
+
+## 📊 Example Parametrized Queries
+
+## Jobs by Location
+ ```bash
+PREPARE jobs_by_location(text) AS
+SELECT jobidentifier, userid, jobstatus, revenue, jobdate
+FROM jobs
+WHERE location = $1
+ORDER BY jobdate DESC
+LIMIT 5;
+ ```
+ ```bash
+EXECUTE jobs_by_location('LOC_1294');
+ ```
+
+## Jobs by Service Name
+ ```bash
+PREPARE jobs_by_service(text) AS
+SELECT jobidentifier, userid, jobstatus, revenue, jobdate
+FROM jobs
+WHERE servicename = $1
+ORDER BY jobdate DESC
+LIMIT 5;
+ ```
+ ```bash
+EXECUTE jobs_by_service('SERVICE_42');
+ ```
+
+## Questions 
+
+The jobs data given to you was static even though it was in a Kafka topic. Would you do anything differently if new jobs arrived continuously to the Kafka topic? If so, what would you do?
+
+
+- If job messages in Kafka weren’t static but streaming continuously, I’d set up the consumer as a permanent service instead of a one-off script; so data is processed in real time as it arrives. I’d use event time and watermarks to handle late or out-of-order events, and make sure offset management / checkpointing is in place so failures don’t cause data loss or duplicate processing. I’d scale Kafka by adding partitions and running multiple consumers; use larger batches, compression, and efficient serialization (like Avro or Protobuf) to cut down message size and overhead. I’d perform transformations closer to the source (in the streaming layer) to catch issues early and reduce downstream load. Finally, I’d add monitoring (latency, consumer lag, error rates, throughput) so I can see bottlenecks early.
+
+⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻
+
+Would you do anything differently if the amount of kafka records in Jobs topic and the user file
+increased significantly
+
+- If the number of Kafka records in the Jobs topic and the size of the user file increased significantly, I would adjust several parts: increase producer batch size and set linger.ms so messages are sent in groups rather than one-by-one; use compression to reduce message size and network usage. For large messages, I might store the heavy payload elsewhere and keep only references in Kafka. Also, I’d enforce retention policies in Kafka so old unneeded messages don’t pile up (by time or size). On the consumer side, I’d increase fetch.min.bytes, fetch.max.wait.ms, max.partition.fetch.bytes etc., and possibly run more consumer instances in parallel. Lastly, I’d set up monitoring (lag, throughput, latency, resource usage) so I can detect performance issues early.
+
+⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻
+
+Would your approach be any different if you had to use 10-20 datasets? Would you change where you do the data transformations?
+
+
+- Yes, I would adjust where and how transformations happen when many datasets are involved. Instead of doing all transformations in the consumer script or right after ingestion, I’d set up a dedicated transformation layer likely inside a data warehouse or using something like dbt  that centralizes schema normalization, cleaning, and enrichment. I’d use staging tables/raw layers to store incoming data as is, then perform transformations (e.g. type casting, field standardization, missing value handling) in batch or scheduled jobs within the warehouse. For very large or frequent datasets, more transformation at the source (e.g. in Kafka stream processing, or micro-services upstream) might help reduce load downstream. In short: with many datasets, it’s better to push “where possible” transformation logic into the DW or a transformation layer rather than doing everything in small scripts; this improves maintainability, scalability, and makes it easier to monitor data quality.
+
+
