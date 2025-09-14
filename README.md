@@ -57,3 +57,20 @@ Follow these steps to run the project locally:
     psql -U postgres -d armut \
     -c "SELECT jobidentifier, userid, jobcreatedate, jobdate, jobstatus, location, revenue, servicename FROM jobs ORDER BY jobidentifier DESC LIMIT 5;"
    ```
+## 📊 Final Case Query
+
+After loading **users** and sending **jobs** into Kafka, you can verify the pipeline with the following query in Postgres:
+
+   ```bash
+   docker compose exec -T postgres psql -U postgres -d armut -c "
+   SELECT j.userid
+   FROM jobs j
+   JOIN users u ON j.userid = u.userid
+   WHERE j.location = 'LOC_1294'
+   AND u.location <> j.location
+   GROUP BY j.userid
+   HAVING SUM(j.revenue) > 0
+   ORDER BY SUM(j.revenue) DESC
+   LIMIT 5;
+   "
+   ```
